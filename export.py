@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Export a study's data into a file with the format CSV
+Export a study's data into a file with the format CSV and the filename data_[datetime].csv
 
 Usage: python export.py studyId
 Parameter: studyId - the ID of the study
@@ -42,7 +42,7 @@ def write_to_file(rows):
         w = csv.DictWriter(f, rows[0].keys())
         w.writeheader()
         for row in rows:
-            print(row)
+            #print(row)
             w.writerow(row)
 
 
@@ -54,7 +54,7 @@ studyId = sys.argv[1]
 
 
 
-dataBase = mysql.connector.connect(DB_HOST, DB_USER, DB_PASSWORD, DB_DATABASE)
+dataBase = mysql.connector.connect(host = DB_HOST, user = DB_USER, passwd = DB_PASSWORD, database = DB_DATABASE)
 cursorObject = dataBase.cursor(dictionary=True)
 
 query = f'''
