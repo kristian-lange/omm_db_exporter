@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Export a study's data into a file with the format CSV and the filename data_[datetime].csv
+Export a study's data into a file with CSV format
 
-Usage: python export.py studyId
+Usage: ./export.py studyId
 Parameter: studyId - the ID of the study
 """
 
@@ -14,7 +14,7 @@ from datetime import datetime
 DB_HOST = "localhost"
 DB_USER = "ommuser"
 DB_PASSWORD = "abc123"
-DB_DATABASE = "omm"
+DB_DATABASE = "omm2"
 
 # Parses the JSON string that belongs to the given key of a dictionary and turns it into a nested dictionary.
 # If the value is 'null' the element belonging to the key is removed.
@@ -25,7 +25,7 @@ def parse_json_element(my_dict, key):
         del my_dict[key]
     return my_dict
 
-# Flattens a dictionary - a nested dictionary is pulled to the first level; works only for a second level dictionary
+# Flattens a dictionary - a nested dictionary is pulled to the first level; works only with second level dictionaries
 def flatten(my_dict):
     result = {}
     for key, value in my_dict.items():
@@ -37,13 +37,20 @@ def flatten(my_dict):
 
 # Writes the given data to a file in CSV format
 def write_to_file(rows):
+    keys = set()
+    for row in rows:
+        keys.update(row.keys())
+
     filename = "data_" + datetime.today().strftime('%Y%m%d%H%M%S') + ".csv"
     with open(filename, "w", newline="") as f:
-        w = csv.DictWriter(f, rows[0].keys())
+        w = csv.DictWriter(f, keys)
         w.writeheader()
         for row in rows:
-            #print(row)
             w.writerow(row)
+    print(f'Filename: {filename}')
+    print(f'Number keys: {len(keys)}')
+    print(f'Number rows: {len(rows)}')
+    print(f'Keys: {keys}')
 
 
 # Check we have the study ID as an argument
@@ -59,9 +66,8 @@ cursorObject = dataBase.cursor(dictionary=True)
 
 query = f'''
 SELECT
-    study_id, name, data
+    study_id, data
 FROM job_results
-LEFT JOIN studies ON job_results.study_id = studies.id
 WHERE study_id = {studyId};
 ;'''
 
@@ -69,10 +75,11 @@ cursorObject.execute(query)
 
 rows = cursorObject.fetchall()
 
-# Parse JSON element 'data'
+# Parse JSON element 'data' and 'meta'
 rows_data_parsed = map(lambda d: parse_json_element(d, 'data'), rows)
-# Flatten the dictionary
+# Flatten the dictionary in the 'data' field so all fields are on the same level
 rows_flattened = list(map(flatten, rows_data_parsed))
+#print(list(rows_flattened))
 # Write data to CSV file
 write_to_file(rows_flattened)
 
