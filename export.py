@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Export a study's data into a file with CSV format
+Exports job data into a file in CSV format
 
 Usage: ./export.py studyId
 Parameter: studyId - the ID of the study
