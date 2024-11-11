@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Exports job data into a file in CSV format
-
-Usage: ./export.py studyId
-Parameter: studyId - the ID of the study
+Usage: ./export.py -h
 """
 
+import argparse
 import mysql.connector
 import sys, inspect, csv, json
 from datetime import datetime
@@ -53,23 +51,23 @@ def write_to_file(rows):
     print(f'Keys: {keys}')
 
 
-# Check we have the study ID as an argument
-if len(sys.argv) <= 1:
-    print("Missing argument study ID")
-    sys.exit()
-studyId = sys.argv[1]
+# Parse command arguments
+parser = argparse.ArgumentParser(description="Exports job result data into a file in CSV format", epilog="Example: ./export.py --ids=1,2 --from=2024-11-01 --to=2024-11-03")
+parser.add_argument("-i", "--ids", help="list of study IDs, comma-separated", required=True)
+parser.add_argument("-f", "--from", help="'from' date in format YYYY-MM-DD")
+parser.add_argument("-t", "--to", help="'to' date in format YYYY-MM-DD")
+args = vars(parser.parse_args())
 
-
-
+# Open database connection
 dataBase = mysql.connector.connect(host = DB_HOST, user = DB_USER, passwd = DB_PASSWORD, database = DB_DATABASE)
 cursorObject = dataBase.cursor(dictionary=True)
 
-query = f'''
-SELECT
-    study_id, data
-FROM job_results
-WHERE study_id = {studyId};
-;'''
+# Generate database query
+query = f"SELECT study_id, data FROM job_results WHERE study_id IN ({args['ids']})"
+if args['from'] and args['to']:
+    query = query + f" AND created_at >= '{args['from']}' AND created_at < '{args['to']}' + INTERVAL 1 DAY;"
+else:
+    query = query + ";"
 
 cursorObject.execute(query)
 
